@@ -9,7 +9,6 @@ class SaveArticleUseCase implements UseCase<void, ArticleEntity> {
 
   @override
   Future<void> call({ArticleEntity? params}) {
-    //return _articleRepository.saveArticle(params!);
-    throw UnimplementedError();
+    return _articleRepository.saveArticle(params!);
   }
 }

@@ -2,14 +2,17 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:news_app_flutter/core/constants/constants.dart';
 import 'package:news_app_flutter/core/resources/data_state.dart';
+import 'package:news_app_flutter/features/daily_news/data/data_sources/local/dao/app_database.dart';
 import 'package:news_app_flutter/features/daily_news/data/data_sources/remote/news_api_service.dart';
 import 'package:news_app_flutter/features/daily_news/data/models/article_dto.dart';
+import 'package:news_app_flutter/features/daily_news/domain/entities/article.dart';
 import 'package:news_app_flutter/features/daily_news/domain/repository/article_repository.dart';
 
 class ArticleRepositoryImpl implements ArticleRepository {
   final NewsApiService _newsApiService;
+  final AppDatabase _appDatabase;
 
-  ArticleRepositoryImpl(this._newsApiService);
+  ArticleRepositoryImpl(this._appDatabase, this._newsApiService);
 
   @override
   Future<DataState<List<ArticleDTO>>> getNewsArticles() async {
@@ -20,7 +23,6 @@ class ArticleRepositoryImpl implements ArticleRepository {
       if (httpResponse.response.statusCode == HttpStatus.ok) {
         return DataSuccess(httpResponse.data.articles!);
       } else {
-        print(httpResponse.response.statusMessage);
         return DataFailed(DioException(
           requestOptions: httpResponse.response.requestOptions,
           error: httpResponse.response.statusMessage,
@@ -28,8 +30,24 @@ class ArticleRepositoryImpl implements ArticleRepository {
         ));
       }
     } on DioException catch (e) {
-      print(e.message);
       return DataFailed(e);
     }
+  }
+
+  @override
+  Future<List<ArticleDTO>> getSavedArticles() {
+    return _appDatabase.articleDAO.getArticles();
+  }
+
+  @override
+  Future<void> removeArticle(ArticleEntity article) {
+    return _appDatabase.articleDAO
+        .deleteArticle(ArticleDTO.fromEntity(article));
+  }
+
+  @override
+  Future<void> saveArticle(ArticleEntity article) {
+    return _appDatabase.articleDAO
+        .insertArticle(ArticleDTO.fromEntity(article));
   }
 }
